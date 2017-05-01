@@ -4,7 +4,15 @@ An app to configurably deep export a selection of items
 
 ## Summary/Description
 
-![screenshot](./images/screenshot.png "This is an example")
+Use an advanced filter to find the items to use as parents, then select one or more using the checkbox.
+
+![grid](./images/screenshot.png "Grid")
+
+Export a line for every item, including all of its parent  information on the same line.  Show a line
+for items at every level, so there will be empties across to the right.
+
+![output](./images/csv_screenshot.png "Output")
+
 
 ## Development Notes
 

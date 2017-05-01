@@ -4,7 +4,7 @@ Ext.define("TSRTM2", {
     logger: new Rally.technicalservices.Logger(),
     defaults: { margin: 10 },
     items: [
-        {xtype:'container',itemId:'selector_box', layout: 'hbox'},
+        {xtype:'container',itemId:'selector_box', layout: 'hbox', defaults: { margin: 5 }},
         {xtype:'container',itemId:'display_box'}
     ],
 
@@ -15,6 +15,8 @@ Ext.define("TSRTM2", {
     launch: function() {
         
         var modelNames = ["PortfolioItem/Initiative"];
+        
+        this._addSelectors(this.down('#selector_box'));
         
         Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
             models: modelNames,
@@ -29,13 +31,102 @@ Ext.define("TSRTM2", {
               // todo
             }
         });
+    },
+    
+    _shouldShowField: function(field){
+        blacklist_fields = ['Workspace','Subscription','ObjectUUID','ObjectID',
+            'VersionId','Recycled'];
         
-        this.down('#selector_box').add({
+        if ( field.hidden ) { return false; }
+        if ( Ext.Array.contains(blacklist_fields,field.name)) { return false; }
+        if ( !field.attributeDefinition ) { return false; }
+        
+        var attribute_def = field.attributeDefinition;
+        
+        if ( attribute_def.AttributeType == "COLLECTION" ) { return false; }
+        
+        return true;
+    },
+    
+    _addSelectors: function(container){
+        var width = 150;
+        
+        this.initiativeFieldPicker = container.add({
+            xtype:'rallyfieldpicker',
+            modelTypes: ['PortfolioItem/Initiative'],
+            width: width,
+            stateful: true,
+            stateEvents: ['select','change'],
+            stateId: this.getContext().getScopedStateId('initiative-fields'),
+            fieldLabel: "Initiative Fields",
+            alwaysExpanded : false,
+            labelAlign: 'top',
+            _shouldShowField: this._shouldShowField,
+            alwaysSelectedValues: ['FormattedID','Name']
+        });
+        
+        this.featureFieldPicker = container.add({
+            xtype:'rallyfieldpicker',
+            alwaysExpanded : false,
+            modelTypes: ['PortfolioItem/Feature'],
+            width: width,
+            fieldLabel: "Feature Fields",
+            stateful: true,
+            stateEvents: ['select','change'],
+            stateId: this.getContext().getScopedStateId('feature-fields'),
+            labelAlign: 'top',
+            _shouldShowField: this._shouldShowField,
+            alwaysSelectedValues: ['FormattedID','Name']
+        });
+        
+        this.storyFieldPicker = container.add({
+            xtype:'rallyfieldpicker',
+            alwaysExpanded : false,
+            modelTypes: ['HierarchicalRequirement'],
+            width: width,
+            fieldLabel: "Story Fields",
+            stateful: true,
+            stateEvents: ['select','change'],
+            stateId: this.getContext().getScopedStateId('story-fields'),
+            labelAlign: 'top',
+            _shouldShowField: this._shouldShowField,
+            alwaysSelectedValues: ['FormattedID','Name']
+        });
+        
+        this.testCaseFieldPicker = container.add({
+            xtype:'rallyfieldpicker',
+            alwaysExpanded : false,
+            modelTypes: ['TestCase'],
+            width: width,
+            fieldLabel: "TestCase Fields",
+            stateful: true,
+            stateEvents: ['select','change'],
+            stateId: this.getContext().getScopedStateId('testcase-fields'),
+            labelAlign: 'top',
+            _shouldShowField: this._shouldShowField,
+            alwaysSelectedValues: ['FormattedID','Name']
+        });
+        
+        this.defectFieldPicker = container.add({
+            xtype:'rallyfieldpicker',
+            alwaysExpanded : false,
+            modelTypes: ['Defect'],
+            width: width,
+            fieldLabel: "Defect Fields",
+            stateful: true,
+            stateEvents: ['select','change'],
+            stateId: this.getContext().getScopedStateId('defect-fields'),
+            labelAlign: 'top',
+            _shouldShowField: this._shouldShowField,
+            alwaysSelectedValues: ['FormattedID','Name']
+        });
+        
+        container.add({
             xtype:'container',
             flex: 1
         });
         
-        this.down('#selector_box').add({
+        container.add({
             xtype: 'rallybutton',
             iconCls: 'icon-export',
             itemId: 'btExport',
@@ -112,22 +203,59 @@ Ext.define("TSRTM2", {
         });
     },
     
+    _getExportColumns: function() {
+        var columns = [];
+        Ext.Array.each(this.initiativeFieldPicker.getValue(), function(field){
+            columns.push({
+                relativeType: "Initiative", 
+                dataIndex: field.get('name'), 
+                text: "Initiative " + field.get('displayName')
+            });
+        });
+        
+        Ext.Array.each(this.featureFieldPicker.getValue(), function(field){
+            columns.push({
+                relativeType: "Feature", 
+                dataIndex: field.get('name'), 
+                text: "Feature " + field.get('displayName')
+            });
+        });
+          
+        Ext.Array.each(this.storyFieldPicker.getValue(), function(field){
+            columns.push({
+                relativeType: "HierarchicalRequirement", 
+                dataIndex: field.get('name'), 
+                text: "Story " + field.get('displayName')
+            });
+        });  
+                  
+        Ext.Array.each(this.testCaseFieldPicker.getValue(), function(field){
+            columns.push({
+                relativeType: "TestCase", 
+                dataIndex: field.get('name'), 
+                text: "TestCase " + field.get('displayName')
+            });
+        });     
+                  
+        Ext.Array.each(this.defectFieldPicker.getValue(), function(field){
+            columns.push({
+                relativeType: "Defect", 
+                dataIndex: field.get('name'), 
+                text: "Defect " + field.get('displayName')
+            });
+        });     
+        
+        return columns;
+    },
+    
     _getExportConfig: function(initiativeOids) {
+        var gridboard = this.down('rallygridboard');
+        
         return Ext.create('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfiguration',{
             portfolioItemTypes: ['PortfolioItem/Feature','PortfolioItem/Initiative'],
             initiativeObjectIDs: initiativeOids,
-            extractFields: [
-                { relativeType: "Initiative", dataIndex: "FormattedID", text: "Initiative ID" },
-                { relativeType: "Initiative", dataIndex: "Name", text: "Name" },
-                { relativeType: "Feature", dataIndex: "FormattedID", text: "Feature ID" },
-                { relativeType: "Feature", dataIndex: "Name", text: "Name" },
-                { relativeType: "HierarchicalRequirement", dataIndex: "FormattedID", text: "Story ID" },
-                { relativeType: "HierarchicalRequirement", dataIndex: "Name", text: "Name" },
-                { relativeType: "TestCase", dataIndex: "FormattedID", text: "Test Case ID" },
-                { relativeType: "TestCase", dataIndex: "Name", text: "Name" },
-                { relativeType: "Defect", dataIndex: "FormattedID", text: "Defect ID" },
-                { relativeType: "Defect", dataIndex: "Name", text: "Name" }
-            ]
+            initiativeFilter: gridboard.getGridOrBoard().getStore().filters && gridboard.getGridOrBoard().getStore().filters.items,
+            extractFields: this._getExportColumns()
         });
     },
     
@@ -138,8 +266,6 @@ Ext.define("TSRTM2", {
         Ext.each(selected_items, function (item) {
           selected_oids.push(item.data.ObjectID);
         });
-        console.log(selected_oids);
-        if ( selected_oids.length === 0 ) { return; }
 
         var exportConfig = this._getExportConfig(selected_oids);
         this.logger.log('_exportData', exportConfig);
