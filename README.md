@@ -13,7 +13,6 @@ for items at every level, so there will be empties across to the right.
 
 ![output](./images/csv_screenshot.png "Output")
 
-
 ## Development Notes
 
 NOTE:  In this export, the assumption is that defects do not exist unless attached to an appropriate test case!
