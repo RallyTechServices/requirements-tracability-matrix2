@@ -1,6 +1,6 @@
 # TS-RTM2
 
-An app to configurably deep export a selection of items
+An app to configurably export a selection of items and its descendants
 
 ## Summary/Description
 
