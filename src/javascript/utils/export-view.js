@@ -55,21 +55,33 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exporter',{
     fetchFeatures: function(initiatives){
         this.initiatives = initiatives;
         this.fireEvent('doexportupdate', "Fetching Portfolio Items...");
+        if ( !initiatives || initiatives.length == 0 ) {
+            return [];
+        }
         return this._fetchWsapiRecords(this.exportConfig.getFeatureConfig(initiatives));
     },
     fetchStories: function(features){
         this.features = features;
         this.fireEvent('doexportupdate', "Fetching User Stories...");
+        if ( !features || features.length == 0 ) {
+            return [];
+        }
         return this._fetchWsapiRecords(this.exportConfig.getStoryConfig(features));
     },
     fetchTestCases: function(stories){
         this.stories = stories;
         this.fireEvent('doexportupdate', Ext.String.format("Fetching Test Cases for {0} User Stories...", stories.length));
+        if ( !stories || stories.length == 0 ) {
+            return [];
+        }
         return this._fetchWsapiRecords(this.exportConfig.getTestCaseConfig(stories));
     },
     fetchDefects: function(testcases){
         this.testCases = testcases;
         this.fireEvent('doexportupdate', Ext.String.format("Fetching Defects for {0} Test Cases...", testcases.length));
+        if ( !testcases || testcases.length == 0 ) {
+            return [];
+        }
         return this._fetchWsapiRecords(this.exportConfig.getDefectConfig(testcases));
     },
     processCSV: function(defects){

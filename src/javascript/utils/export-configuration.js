@@ -26,7 +26,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
      *
      */
     transformRecordsToExtract: function(initiatives, features, stories, testCases, defects){
-        //console.log('transformRecordsToExtract', initiatives, features, stories, testCases);
+        console.log('transformRecordsToExtract', initiatives.length, features.length, stories.length, testCases.length, defects.length);
         var initiativeMap = {};
         for (var k=0; k<initiatives.length; k++){
             var oid = initiatives[k].get('ObjectID');
@@ -47,6 +47,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         
         var storyMap = {};
         for (var k=0; k<stories.length; k++){
+            console.log(k);
             var story = stories[k].getData();
             storyMap[story.ObjectID] = story;
             story._kids = [];
@@ -92,13 +93,17 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         }
         csv.push(row.join(','));
 
+        console.log(initiativeMap);
+        var fields = this.getFieldsFor('Initiative');
         Ext.Object.each(initiativeMap, function(key,initiative) {
+            console.log("Initiative:", initiative.FormattedID);
             row = [];
-            var fields = this.getFieldsFor('Initiative');
+            console.log(fields);
             for (var j=0; j<fields.length; j++ ) {
                 row.push(this.scrubCell(initiative[fields[j].dataIndex]));
             }
             csv.push(row.join(','));
+            console.log('csv',csv);
             csv = Ext.Array.push(csv, this._getChildRows(row, initiative, "Feature"));
         },this);
 
@@ -251,6 +256,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         return fetch;
     },
     getFieldsFor: function(name){
+        console.log('all fields:', this.extractFields);
         var fields = Ext.Array.filter(this.extractFields, function(f){
             return (f.relativeType === name);
         });

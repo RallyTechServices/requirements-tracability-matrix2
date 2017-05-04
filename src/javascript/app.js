@@ -11,7 +11,9 @@ Ext.define("TSRTM2", {
     integrationHeaders : {
         name : "TSRTM2"
     },
-                        
+         
+    alwaysSelectedValues: ['FormattedID','Name'],
+    
     launch: function() {
         
         var modelNames = ["PortfolioItem/Initiative"];
@@ -56,13 +58,14 @@ Ext.define("TSRTM2", {
             modelTypes: ['PortfolioItem/Initiative'],
             width: width,
             stateful: true,
+            autoExpand: false,
             stateEvents: ['select','change'],
             stateId: this.getContext().getScopedStateId('initiative-fields'),
             fieldLabel: "Initiative Fields",
             alwaysExpanded : false,
             labelAlign: 'top',
             _shouldShowField: this._shouldShowField,
-            alwaysSelectedValues: ['FormattedID','Name']
+            alwaysSelectedValues: this.alwaysSelectedValues
         });
         
         this.featureFieldPicker = container.add({
@@ -76,7 +79,7 @@ Ext.define("TSRTM2", {
             stateId: this.getContext().getScopedStateId('feature-fields'),
             labelAlign: 'top',
             _shouldShowField: this._shouldShowField,
-            alwaysSelectedValues: ['FormattedID','Name']
+            alwaysSelectedValues: this.alwaysSelectedValues
         });
         
         this.storyFieldPicker = container.add({
@@ -90,7 +93,7 @@ Ext.define("TSRTM2", {
             stateId: this.getContext().getScopedStateId('story-fields'),
             labelAlign: 'top',
             _shouldShowField: this._shouldShowField,
-            alwaysSelectedValues: ['FormattedID','Name']
+            alwaysSelectedValues:this.alwaysSelectedValues
         });
         
         this.testCaseFieldPicker = container.add({
@@ -104,7 +107,7 @@ Ext.define("TSRTM2", {
             stateId: this.getContext().getScopedStateId('testcase-fields'),
             labelAlign: 'top',
             _shouldShowField: this._shouldShowField,
-            alwaysSelectedValues: ['FormattedID','Name']
+            alwaysSelectedValues: this.alwaysSelectedValues
         });
         
         this.defectFieldPicker = container.add({
@@ -118,7 +121,7 @@ Ext.define("TSRTM2", {
             stateId: this.getContext().getScopedStateId('defect-fields'),
             labelAlign: 'top',
             _shouldShowField: this._shouldShowField,
-            alwaysSelectedValues: ['FormattedID','Name']
+            alwaysSelectedValues: this.alwaysSelectedValues
         });
         
         container.add({
@@ -139,7 +142,7 @@ Ext.define("TSRTM2", {
             }
         });
     },
-      
+    
     _loadWsapiRecords: function(config){
         var deferred = Ext.create('Deft.Deferred');
         var me = this;
@@ -204,8 +207,11 @@ Ext.define("TSRTM2", {
     },
     
     _getExportColumns: function() {
-        var columns = [];
-        Ext.Array.each(this.initiativeFieldPicker.getValue(), function(field){
+        var me = this,
+            columns = [];
+        
+        var fields = Ext.Array.merge([],me.initiativeFieldPicker.getValue() );
+        Ext.Array.each(fields, function(field){
             columns.push({
                 relativeType: "Initiative", 
                 dataIndex: field.get('name'), 
@@ -213,7 +219,9 @@ Ext.define("TSRTM2", {
             });
         });
         
-        Ext.Array.each(this.featureFieldPicker.getValue(), function(field){
+        fields = Ext.Array.merge([],me.featureFieldPicker.getValue() );
+
+        Ext.Array.each(fields, function(field){
             columns.push({
                 relativeType: "Feature", 
                 dataIndex: field.get('name'), 
@@ -221,7 +229,8 @@ Ext.define("TSRTM2", {
             });
         });
           
-        Ext.Array.each(this.storyFieldPicker.getValue(), function(field){
+        fields = Ext.Array.merge([],me.storyFieldPicker.getValue() );
+        Ext.Array.each(fields, function(field){
             columns.push({
                 relativeType: "HierarchicalRequirement", 
                 dataIndex: field.get('name'), 
@@ -229,7 +238,8 @@ Ext.define("TSRTM2", {
             });
         });  
                   
-        Ext.Array.each(this.testCaseFieldPicker.getValue(), function(field){
+        fields = Ext.Array.merge([],me.testCaseFieldPicker.getValue() );
+        Ext.Array.each(fields, function(field){
             columns.push({
                 relativeType: "TestCase", 
                 dataIndex: field.get('name'), 
@@ -237,7 +247,8 @@ Ext.define("TSRTM2", {
             });
         });     
                   
-        Ext.Array.each(this.defectFieldPicker.getValue(), function(field){
+        fields = Ext.Array.merge([],me.defectFieldPicker.getValue() );
+        Ext.Array.each(fields, function(field){
             columns.push({
                 relativeType: "Defect", 
                 dataIndex: field.get('name'), 
