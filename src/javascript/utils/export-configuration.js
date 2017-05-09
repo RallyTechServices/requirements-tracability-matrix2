@@ -52,6 +52,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             var story = stories[k].getData();
             storyMap[story.ObjectID] = story;
             story._kids = [];
+            story._defectKids = []
             if (story.PortfolioItem){
                 var parent_oid = story.PortfolioItem.ObjectID;
                 if (featureMap[parent_oid]){  featureMap[parent_oid]._kids.push(story);  }
@@ -65,10 +66,9 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         var testCaseMap = {};
         for (var k=0; k<testCases.length; k++){
             var tc = testCases[k].getData();
-            tc._kids = [];
+            tc._defectKids = [];
             testCaseMap[tc.ObjectID] = tc;
             if (tc.WorkProduct){
-
                 var parent_oid = tc.WorkProduct.ObjectID;
                 if (storyMap[parent_oid]){
                   storyMap[parent_oid]._kids.push(tc);
@@ -84,8 +84,14 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             if (defect.TestCase){
                 var parent_oid = defect.TestCase.ObjectID;
                 if (testCaseMap[parent_oid]){
-                  testCaseMap[parent_oid]._kids.push(defect);  
+                  testCaseMap[parent_oid]._defectKids.push(defect);
                 }
+            }
+            if (defect.Requirement){
+              var parent_oid = defect.Requirement.ObjectID;
+              if (storyMap[parent_oid]){
+                storyMap[parent_oid]._defectKids.push(defect);
+              }
             }
         }
 
@@ -98,38 +104,64 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         }
         csv.push(row.join(','));
 
-        console.log(initiativeMap);
         var fields = this.getFieldsFor('Initiative');
         Ext.Object.each(initiativeMap, function(key,initiative) {
-            console.log("Initiative:", initiative.FormattedID);
             row = [];
-            console.log(fields);
             for (var j=0; j<fields.length; j++ ) {
                 row.push(this.scrubCell(initiative[fields[j].dataIndex]));
             }
             csv.push(row.join(','));
-            console.log('csv',csv);
             csv = Ext.Array.push(csv, this._getChildRows(row, initiative, "Feature"));
         },this);
 
         return csv.join('\r\n');
     },
+    _getKidsKey: function(child_type){
+      console.log('_getKidsKey', child_type);
+        var key = "_kids";
+        if (child_type === "Defect"){
+          key = "_defectKids";
+        }
+        return key;
+    },
 
     _getChildRows: function(row_start, parent, child_type) {
         var csv = [];
 
-        Ext.Array.each(parent._kids, function(child) {
+        var kidsKey = this._getKidsKey(child_type),
+            kids = parent[kidsKey];
+
+        var fields = this.getFieldsFor(child_type),
+            spacer_fields = [];
+
+        if (child_type === "Defect" && parent._type === 'hierarchicalrequirement'){
+            spacer_fields = this.getFieldsFor("TestCase");
+        }
+
+        Ext.Array.each(kids, function(child) {
             var child_row = Ext.clone(row_start);
-            var fields = this.getFieldsFor(child_type);
+
+            //We need to add spacer columns to accomodate child defects of stories
+            for (var j=0;j<spacer_fields.length; j++){
+                child_row.push("");
+            }
+
             for (var j=0; j<fields.length; j++ ) {
                 child_row.push(this.scrubCell(child[fields[j].dataIndex]));
             }
             csv.push(child_row.join(','));
 
-            var grandchild_type = this._getChildTypeFor(child_type);
+            var grandchild_types = this._getChildTypeFor(child_type);
 
-            if ( grandchild_type ) {
-                csv = Ext.Array.push(csv, this._getChildRows(child_row, child,grandchild_type));
+            if ( grandchild_types ) {
+              if (!Ext.isArray(grandchild_types)){
+                grandchild_types = [grandchild_types];
+              }
+
+              for (var i=0;i<grandchild_types.length; i++){
+                csv = Ext.Array.push(csv, this._getChildRows(child_row, child,grandchild_types[i]));
+              }
+
             }
         },this);
         return csv;
@@ -139,7 +171,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         var mapper = {
             "Initiative": "Feature",
             "Feature":"HierarchicalRequirement",
-            "HierarchicalRequirement": "TestCase",
+            "HierarchicalRequirement": ["Defect", "TestCase"],
             "TestCase": "Defect",
             "Defect": null
         }
@@ -243,7 +275,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         return fetch;
     },
     getDefectFetch: function(){
-        var fetch = ['ObjectID','FormattedID','TestCase'];
+        var fetch = ['ObjectID','FormattedID','TestCase','Requirement'];
         Ext.Array.each(this.extractFields, function(f){
             if (f.relativeType === 'Defect'){
                 fetch.push(f.dataIndex);
@@ -394,14 +426,23 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             enablePostGet: true
         };
     },
-    getDefectConfig: function(testcases){
+    getDefectConfig: function(testcases, stories){
         var filters = [];
 
         for (var i=0; i<testcases.length; i++){
-            if (testcases[i].get('Defect') && testcases[i].get('Defects').Count > 0){
+            if (testcases[i].get('Defects') && testcases[i].get('Defects').Count > 0){
                 filters.push({
                     property: "TestCase.ObjectID",
                     value: testcases[i].get('ObjectID')
+                });
+            }
+        }
+
+        for (var i=0; i<stories.length; i++){
+            if (stories[i].get('Defects') && stories[i].get('Defects').Count > 0){
+                filters.push({
+                    property: "Requirement.ObjectID",
+                    value: stories[i].get('ObjectID')
                 });
             }
         }

@@ -82,11 +82,11 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exporter',{
         if ( !testcases || testcases.length == 0 ) {
             return [];
         }
-        return this._fetchWsapiRecords(this.exportConfig.getDefectConfig(testcases));
+        return this._fetchWsapiRecords(this.exportConfig.getDefectConfig(testcases, this.stories));
     },
     processCSV: function(defects){
         this.defects = defects;
-        var csv = this.exportConfig.transformRecordsToExtract(this.initiatives, this.features, 
+        var csv = this.exportConfig.transformRecordsToExtract(this.initiatives, this.features,
             this.stories, this.testCases, this.defects);
         this.fireEvent('doexportcomplete', csv);
     },
