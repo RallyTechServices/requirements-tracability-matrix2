@@ -11,7 +11,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         this.portfolioItemTypes = config.portfolioItemTypes;
         this.initiativeObjectIDs = config.initiativeObjectIDs;
         this.initiativeFilter = config.initiativeFilter;
-        
+
         this.extractFields = config.extractFields;
     },
     /**
@@ -26,7 +26,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
      *
      */
     transformRecordsToExtract: function(initiatives, features, stories, testCases, defects){
-        console.log('transformRecordsToExtract', initiatives.length, features.length, stories.length, testCases.length, defects.length);
+      //  console.log('transformRecordsToExtract', initiatives.length, features.length, stories.length, testCases.length, defects.length);
         var initiativeMap = {};
         for (var k=0; k<initiatives.length; k++){
             var oid = initiatives[k].get('ObjectID');
@@ -41,22 +41,24 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             featureMap[feature.ObjectID] = feature;
             if (feature.Parent){
                 var parent_oid = feature.Parent.ObjectID;
-                initiativeMap[parent_oid]._kids.push(feature);
+                if (initiativeMap[parent_oid]){
+                  initiativeMap[parent_oid]._kids.push(feature);
+                }
             }
         }
-        
+
         var storyMap = {};
         for (var k=0; k<stories.length; k++){
-            console.log(k);
             var story = stories[k].getData();
             storyMap[story.ObjectID] = story;
             story._kids = [];
             if (story.PortfolioItem){
                 var parent_oid = story.PortfolioItem.ObjectID;
-                featureMap[parent_oid]._kids.push(story);
+                if (featureMap[parent_oid]){  featureMap[parent_oid]._kids.push(story);  }
+
             } else if (story.Feature){
                 var parent_oid = story.Feature.ObjectID;
-                featureMap[parent_oid]._kids.push(story);
+                if (featureMap[parent_oid]){  featureMap[parent_oid]._kids.push(story);  }
             }
         }
 
@@ -65,11 +67,12 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             var tc = testCases[k].getData();
             tc._kids = [];
             testCaseMap[tc.ObjectID] = tc;
-
             if (tc.WorkProduct){
-                
+
                 var parent_oid = tc.WorkProduct.ObjectID;
-                storyMap[parent_oid]._kids.push(tc);
+                if (storyMap[parent_oid]){
+                  storyMap[parent_oid]._kids.push(tc);
+                }
             }
         }
 
@@ -80,10 +83,12 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             defectMap[defect.ObjectID] = defect;
             if (defect.TestCase){
                 var parent_oid = defect.TestCase.ObjectID;
-                testCaseMap[parent_oid]._kids.push(defect);
+                if (testCaseMap[parent_oid]){
+                  testCaseMap[parent_oid]._kids.push(defect);  
+                }
             }
         }
-        
+
         var csv = [],
             row = [];
 
@@ -109,9 +114,9 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
 
         return csv.join('\r\n');
     },
-    
+
     _getChildRows: function(row_start, parent, child_type) {
-        var csv = []; 
+        var csv = [];
 
         Ext.Array.each(parent._kids, function(child) {
             var child_row = Ext.clone(row_start);
@@ -120,16 +125,16 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
                 child_row.push(this.scrubCell(child[fields[j].dataIndex]));
             }
             csv.push(child_row.join(','));
-            
+
             var grandchild_type = this._getChildTypeFor(child_type);
-            
+
             if ( grandchild_type ) {
                 csv = Ext.Array.push(csv, this._getChildRows(child_row, child,grandchild_type));
             }
         },this);
         return csv;
     },
-    
+
     _getChildTypeFor: function(type){
         var mapper = {
             "Initiative": "Feature",
@@ -140,7 +145,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         }
         return mapper[type];
     },
-    
+
     scrubCell: function(val){
         if ( Ext.isObject(val) ) {
             val = val._refObjectName;
@@ -277,14 +282,21 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
                     value: this.initiativeObjectIDs[i]
                 });
             }
-    
+
+            if (filters.length === 0){
+                filters.push({
+                   property: "ObjectID",
+                   value: 0
+                });
+            }
+
             if (filters && filters.length > 1){
                 filters = Rally.data.wsapi.Filter.or(filters);
             }
         }
-        
+
         console.log('filters:', filters);
-        
+
         return {
             model: this.portfolioItemTypes[1],
             fetch: this.getInitiativeFetch(),
@@ -300,10 +312,17 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             });
         }
 
+        if (filters.length === 0){
+            filters.push({
+               property: "ObjectID",
+               value: 0
+            });
+        }
+
         if (filters && filters.length > 1){
             filters = Rally.data.wsapi.Filter.or(filters);
         }
-        
+
         return {
             model: this.portfolioItemTypes[0],
             fetch: this.getFeatureFetch(),
@@ -316,11 +335,18 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
     getStoryConfig: function(features){
         var filters = [],
             featureName = this.getFeatureName();
-            
+
          for (var i=0; i<features.length; i++){
             filters.push({
                 property: featureName + ".ObjectID",
                 value: features[i].get('ObjectID')
+            });
+        }
+
+        if (filters.length === 0){
+            filters.push({
+               property: "ObjectID",
+               value: 0
             });
         }
 
@@ -348,9 +374,17 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             }
         }
 
+        if (filters.length === 0){
+            filters.push({
+               property: "ObjectID",
+               value: 0
+            });
+        }
+
         if (filters && filters.length > 1){
             filters = Rally.data.wsapi.Filter.or(filters);
         }
+
         return {
             model: 'TestCase',
             fetch: this.getTestCaseFetch(),
@@ -370,6 +404,13 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
                     value: testcases[i].get('ObjectID')
                 });
             }
+        }
+
+        if (filters.length === 0){
+            filters.push({
+               property: "ObjectID",
+               value: 0
+            });
         }
 
         if (filters && filters.length > 1){
