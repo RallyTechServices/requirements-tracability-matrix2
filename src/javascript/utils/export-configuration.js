@@ -190,7 +190,11 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         // 
         val = val
           .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"');
+          .replace(/[\u201C\u201D]/g, '"')
+          .replace(/&rsquo;/,"'")
+          .replace(/&ldquo;/,'"')
+          .replace(/&rdquo;/,'"')
+          .replace(/&lsquo;/,"'");
           
         var re = new RegExp(',|\"|\r|\n','g'),
             reHTML = new RegExp('<\/?[^>]+>', 'g'),
