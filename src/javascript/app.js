@@ -293,7 +293,6 @@ Ext.define("TSRTM2", {
     },
     saveExportFile: function(csv){
         Rally.ui.notify.Notifier.hide({});
-        this.logger.log('saveExportFile', csv);
         var fileName = Ext.String.format("tracability-matrix-{0}.csv",Rally.util.DateTime.format(new Date(), 'Y-m-d-h-i-s'));
         this.saveCSVToFile(csv,fileName);
     },
