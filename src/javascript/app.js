@@ -36,7 +36,7 @@ Ext.define("TSRTM2", {
 
     _shouldShowField: function(field){
         blacklist_fields = ['Workspace','Subscription','ObjectUUID','ObjectID',
-            'VersionId','Recycled'];
+            'VersionId','Recycled', 'Rank','DragAndDropRank'];
 
         if ( field.hidden ) { return false; }
         if ( Ext.Array.contains(blacklist_fields,field.name)) { return false; }
