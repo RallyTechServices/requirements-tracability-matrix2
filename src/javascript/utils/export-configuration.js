@@ -117,7 +117,6 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         return csv.join('\r\n');
     },
     _getKidsKey: function(child_type){
-      console.log('_getKidsKey', child_type);
         var key = "_kids";
         if (child_type === "Defect"){
           key = "_defectKids";
@@ -178,12 +177,27 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         return mapper[type];
     },
 
+    /**
+     * clean values for export
+     * â€™
+     */
     scrubCell: function(val){
         val = val || '';
 
         if ( Ext.isObject(val) ) {
             val = val._refObjectName;
         }
+        
+        // replace smartquotes with good ones
+        // 
+        val = val
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '"')
+          .replace(/&rsquo;/,"'")
+          .replace(/&ldquo;/,'"')
+          .replace(/&rdquo;/,'"')
+          .replace(/&lsquo;/,"'");
+          
         var re = new RegExp(',|\"|\r|\n','g'),
             reHTML = new RegExp('<\/?[^>]+>', 'g'),
             reNbsp = new RegExp('&nbsp;','ig');
@@ -295,7 +309,6 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         return fetch;
     },
     getFieldsFor: function(name){
-        console.log('all fields:', this.extractFields);
         var fields = Ext.Array.filter(this.extractFields, function(f){
             return (f.relativeType === name);
         });
@@ -328,8 +341,6 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
                 filters = Rally.data.wsapi.Filter.or(filters);
             }
         }
-
-        console.log('filters:', filters);
 
         return {
             model: this.portfolioItemTypes[1],
