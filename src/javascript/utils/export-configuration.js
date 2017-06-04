@@ -182,6 +182,8 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
      * â€™
      */
     scrubCell: function(val){
+        val = val || '';
+
         if ( Ext.isObject(val) ) {
             val = val._refObjectName;
         }
@@ -205,16 +207,16 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         }
 
         //Strip out HTML tags, too
-        if (reHTML.test(val)){
+        if (val && reHTML.test(val)){
             val = Ext.util.Format.htmlDecode(val);
             val = Ext.util.Format.stripTags(val);
         }
 
-        if (reNbsp.test(val)){
+        if (val && reNbsp.test(val)){
             val = val.replace(reNbsp,' ');
         }
 
-        if (re.test(val)){ //enclose in double quotes if we have the delimiters
+        if (val && re.test(val)){ //enclose in double quotes if we have the delimiters
             val = val.replace(/\"/g,'\"\"');
             val = Ext.String.format("\"{0}\"",val);
         }
