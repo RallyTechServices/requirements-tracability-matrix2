@@ -25,7 +25,7 @@ Ext.override(Rally.ui.picker.FieldPicker,{
         }
     },
     getState: function(){
-      var valueField = this.valueField;
+      var valueField = 'name';
       return {value: Ext.Array.map(this.getValue(), function(v){ return v.get(valueField); }).join(',')};
     },
     applyState: function(state) {
