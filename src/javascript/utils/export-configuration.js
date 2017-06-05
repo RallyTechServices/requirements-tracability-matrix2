@@ -110,7 +110,9 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             for (var j=0; j<fields.length; j++ ) {
                 row.push(this.scrubCell(initiative[fields[j].dataIndex]));
             }
-            csv.push(row.join(','));
+            if (!initiative._kids || initiative._kids.length === 0){
+              csv.push(row.join(','));
+            }
             csv = Ext.Array.push(csv, this._getChildRows(row, initiative, "Feature"));
         },this);
 
@@ -148,7 +150,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
             for (var j=0; j<fields.length; j++ ) {
                 child_row.push(this.scrubCell(child[fields[j].dataIndex]));
             }
-            csv.push(child_row.join(','));
+            //csv.push(child_row.join(','));
 
             var grandchild_types = this._getChildTypeFor(child_type);
 
@@ -157,12 +159,21 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
                 grandchild_types = [grandchild_types];
               }
 
+              var grandchildren = false;
               for (var i=0;i<grandchild_types.length; i++){
-                csv = Ext.Array.push(csv, this._getChildRows(child_row, child,grandchild_types[i]));
+                rows = this._getChildRows(child_row, child,grandchild_types[i]);
+                if (rows.length > 0){
+                  grandchildren = true;
+                  csv = Ext.Array.push(csv, rows);
+                }
               }
-
+              if (!grandchildren){
+                csv.push(child_row.join(','))
+              }
             }
+
         },this);
+
         return csv;
     },
 
@@ -182,14 +193,18 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
      * â€™
      */
     scrubCell: function(val){
-        val = val || '';
+        if (!val){
+          return '';  //need to return an empty string otherwise this will fail on nulls and undefineds
+        }
 
         if ( Ext.isObject(val) ) {
             val = val._refObjectName;
         }
-        
+
+        val = val.toString(); //need to convert to string otherwise this fails on numbers
+
         // replace smartquotes with good ones
-        // 
+        //
         val = val
           .replace(/[\u2018\u2019]/g, "'")
           .replace(/[\u201C\u201D]/g, '"')
@@ -197,7 +212,7 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
           .replace(/&ldquo;/,'"')
           .replace(/&rdquo;/,'"')
           .replace(/&lsquo;/,"'");
-          
+
         var re = new RegExp(',|\"|\r|\n','g'),
             reHTML = new RegExp('<\/?[^>]+>', 'g'),
             reNbsp = new RegExp('&nbsp;','ig');
@@ -207,16 +222,16 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
         }
 
         //Strip out HTML tags, too
-        if (val && reHTML.test(val)){
+        if (reHTML.test(val)){
             val = Ext.util.Format.htmlDecode(val);
             val = Ext.util.Format.stripTags(val);
         }
 
-        if (val && reNbsp.test(val)){
+        if (reNbsp.test(val)){
             val = val.replace(reNbsp,' ');
         }
 
-        if (val && re.test(val)){ //enclose in double quotes if we have the delimiters
+        if (re.test(val)){ //enclose in double quotes if we have the delimiters
             val = val.replace(/\"/g,'\"\"');
             val = Ext.String.format("\"{0}\"",val);
         }

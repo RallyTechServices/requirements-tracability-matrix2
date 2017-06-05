@@ -1,6 +1,6 @@
 Ext.override(Rally.ui.picker.FieldPicker,{
     setValue: function(values) {
-        
+
         if (this.store) {
             if (Ext.isString(values)) {
                 // convert customField -> c_customField, in case called with old wsapi1.x values while in 2.x
@@ -23,5 +23,14 @@ Ext.override(Rally.ui.picker.FieldPicker,{
                 this.setValue(values);
             }, this);
         }
+    },
+    getState: function(){
+      var valueField = this.valueField;
+      return {value: Ext.Array.map(this.getValue(), function(v){ return v.get(valueField); }).join(',')};
+    },
+    applyState: function(state) {
+      if (state && state.value) {
+          this.setValue(state.value);
+      }
     }
 });
