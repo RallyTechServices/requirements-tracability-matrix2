@@ -161,15 +161,17 @@ Ext.define('RallyTechServices.RequirementsTracabilityMatrix.utils.exportConfigur
 
               var grandchildren = false;
               for (var i=0;i<grandchild_types.length; i++){
-                rows = this._getChildRows(child_row, child,grandchild_types[i]);
+                rows = this._getChildRows(child_row,child,grandchild_types[i]);
                 if (rows.length > 0){
-                  grandchildren = true;
                   csv = Ext.Array.push(csv, rows);
+                  grandchildren = true;
                 }
               }
               if (!grandchildren){
-                csv.push(child_row.join(','))
+                csv.push(child_row.join(','));
               }
+            } else {
+                csv.push(child_row.join(','));
             }
 
         },this);
